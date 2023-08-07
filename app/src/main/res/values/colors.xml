@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorPrimary50" >#80FF6E71</color>
+    <color name="colorPrimary10" >#1AFF6E71</color>
+    <color name="rippelColor">#0099CC</color>
+    <color name="colorPrimaryOld" >#FF6E71</color>
+    <color name="highlight_label_color">#FF4347</color>
+    <color name="colorPrimary">#EC0026</color>
+    <color name="colorCardpayment">#F6F6F6</color>
+    <color name="colorPrimaryDark">#EC0026</color>
+    <color name="colorPrimaryMedium">#FFAAAC</color>
+    <color name="colorPrimaryLightest">#FCF8F8</color>
+    <color name="colorPrimaryLighter">#FFE2E3</color>
+    <color name="colorSecondary">#8a8d92</color>
+    <color name="colorSecondaryDark">#626569</color>
+    <color name="colorSecondaryMedium">#a6a8ab</color>
+    <color name="colorSecondaryLight">#dadada</color>
+    <color name="lighterGray">#f2f2f2</color>
+</resources>
