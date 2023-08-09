@@ -16,24 +16,20 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
-import androidx.media3.database.StandaloneDatabaseProvider
-import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultDataSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.NoOpCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.recyclerview.widget.RecyclerView
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
-import java.io.File
+import com.yeyint.tiktoktest.utils.DoubleClick
+import com.yeyint.tiktoktest.utils.DoubleClickListener
+import com.yeyint.tiktoktest.utils.VideoCache
 
 
 @UnstableApi class VideosAdapter(private val mContext : Context, private val mVideoItems: List<VideoItem>,private val listener : SnackInterface) :
@@ -235,7 +231,7 @@ import java.io.File
                      //exoPlayer.play()
                  }
              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
-             binding.root.setOnClickListener(DoubleClick(object : DoubleClickListener{
+             binding.root.setOnClickListener(DoubleClick(object : DoubleClickListener {
                  override fun onSingleClickEvent(view: View?) {
                      if( player?.isPlaying == true){
                          binding.ivPlay.visibility = View.VISIBLE
