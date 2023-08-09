@@ -30,6 +30,9 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.recyclerview.widget.RecyclerView
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
+import com.yeyint.tiktoktest.utils.DoubleClick
+import com.yeyint.tiktoktest.utils.DoubleClickListener
+import com.yeyint.tiktoktest.utils.VideoCache
 
 
 @UnstableApi
