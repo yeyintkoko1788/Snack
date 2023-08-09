@@ -3,12 +3,9 @@ package com.yeyint.tiktoktest
 import android.animation.Animator
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.SurfaceTexture
 import android.media.MediaCodec
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.TextureView.SurfaceTextureListener
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -19,10 +16,24 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultDataSourceFactory
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.FileDataSource
+import androidx.media3.datasource.cache.CacheDataSink
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.NoOpCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.recyclerview.widget.RecyclerView
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
+import java.io.File
 
 
 @UnstableApi class VideosAdapter(private val mContext : Context, private val mVideoItems: List<VideoItem>,private val listener : SnackInterface) :
@@ -135,18 +146,41 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
              val trackSelector = DefaultTrackSelector(context).apply {
                  setParameters(buildUponParameters().setMaxVideoSizeSd())
              }
+             // Produces DataSource instances through which media data is loaded.
+
+             val downloadCache = VideoCache.getInstance(context)
+             val cacheSink = CacheDataSink.Factory()
+                 .setCache(downloadCache!!)
+             val upstreamFactory = DefaultDataSource.Factory(context, DefaultHttpDataSource.Factory())
+             val downStreamFactory = FileDataSource.Factory()
+             val cacheDataSourceFactory  =
+                 CacheDataSource.Factory()
+                     .setCache(downloadCache)
+                     .setCacheWriteDataSinkFactory(cacheSink)
+                     .setCacheReadDataSourceFactory(downStreamFactory)
+                     .setUpstreamDataSourceFactory(upstreamFactory)
+                     .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+
+             val mediaItem = MediaItem.Builder()
+                 .setUri(mData?.videoURL)
+                 .setMimeType(MimeTypes.VIDEO_MP4)
+                 .build()
+//             val mediaSource =
+//                 HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
+             val mediaSource : MediaSource = DefaultMediaSourceFactory(context)
+                 .setDataSourceFactory(cacheDataSourceFactory)
+                 .createMediaSource(mediaItem)
+
              player = ExoPlayer.Builder(binding.root.context)
                  .setTrackSelector(trackSelector)
                  .build()
                  .also { exoPlayer ->
-                     //binding.videoView.player = exoPlayer
-                     exoPlayer.setVideoTextureView(binding.videoView)
-                     val mediaItem = MediaItem.Builder()
-                         .setUri(mData?.videoURL)
-                         .setMimeType(MimeTypes.VIDEO_MP4)
-                         .build()
+                     binding.videoView.player = exoPlayer
+                     binding.videoView.useController = false
+                     //exoPlayer.setVideoTextureView(binding.videoView)
                      exoPlayer.seekTo(0)
-                     exoPlayer.setMediaItem(mediaItem)
+                     //exoPlayer.setMediaItem(mediaItem)
+                     exoPlayer.setMediaSource(mediaSource)
                      exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
                      exoPlayer.videoScalingMode = MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
                      exoPlayer.playWhenReady = false
@@ -201,8 +235,8 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
                      //exoPlayer.play()
                  }
              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
-             binding.root.setOnClickListener(object : DoubleClickListener(){
-                 override fun onSingleClick(v: View?) {
+             binding.root.setOnClickListener(DoubleClick(object : DoubleClickListener{
+                 override fun onSingleClickEvent(view: View?) {
                      if( player?.isPlaying == true){
                          binding.ivPlay.visibility = View.VISIBLE
                          player?.pause()
@@ -212,12 +246,14 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
                      }
                  }
 
-                 override fun onDoubleClick(v: View?) {
+                 override fun onDoubleClickEvent(view: View?) {
+                     binding.heartAni.visibility = View.VISIBLE
                      binding.heartAni.playAnimation()
                      delegate.onDoubleTap(bindingAdapterPosition)
                      binding.ivHeart.setImageDrawable(ContextCompat.getDrawable(context,R.drawable.ic_heart))
                  }
-            })
+
+                 }))
          }
 
         fun play(){

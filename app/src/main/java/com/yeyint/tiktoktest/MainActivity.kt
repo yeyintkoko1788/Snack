@@ -22,13 +22,13 @@ import androidx.viewpager2.widget.ViewPager2
         adapter = VideosAdapter(this,videoItems,this)
 
         val item = VideoItem()
-        item.videoURL = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        item.videoURL = "https://www.exit109.com/~dnn/clips/RW20seconds_1.mp4"
         item.videoTitle = "Women In Tech"
         item.videoDesc = "International Women's Day 2019"
         videoItems.add(item)
 
         val item2 = VideoItem()
-        item2.videoURL = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+        item2.videoURL = "https://www.exit109.com/~dnn/clips/RW20seconds_2.mp4"
         item2.videoTitle = "Sasha Solomon"
         item2.videoDesc = "How Sasha Solomon Became a Software Developer at Twitter"
         videoItems.add(item2)
