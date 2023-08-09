@@ -10,11 +10,12 @@ import androidx.media3.exoplayer.ExoPlayer
 class MediaLifecycleObserver(
     private val mediaPlayer: ExoPlayer?,
     lifecycleOwner: LifecycleOwner
-) :
-    LifecycleEventObserver {
+) : LifecycleEventObserver {
     init {
         lifecycleOwner.lifecycle.addObserver(this)
     }
+
+    var currentPlayer : ExoPlayer? = null
 
 //    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
 //    fun onPause() {
@@ -35,12 +36,14 @@ class MediaLifecycleObserver(
         if (event == Lifecycle.Event.ON_PAUSE){
             if (mediaPlayer != null && mediaPlayer.isPlaying) {
                 Log.d("TAG", "Onpause triggered")
-                mediaPlayer.pause() // or mediaPlayer.stop() based on your needs
+                mediaPlayer.pause() // or mediaPlayer.stop() based on your needs\
+                currentPlayer = mediaPlayer
             }
         }else if (event == Lifecycle.Event.ON_RESUME){
-            if (mediaPlayer != null && !mediaPlayer.isPlaying) {
+            if (mediaPlayer != null && currentPlayer != null) {
                 Log.d("TAG", "Onresume triggered")
-                mediaPlayer.play() // Resume playback if it was paused
+                currentPlayer?.play() // Resume playback if it was paused
+                currentPlayer = null
             }
         }
     }

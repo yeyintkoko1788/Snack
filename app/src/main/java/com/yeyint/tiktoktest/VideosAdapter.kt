@@ -1,14 +1,17 @@
 package com.yeyint.tiktoktest
 
+import android.animation.Animator
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.SurfaceTexture
 import android.media.MediaCodec
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.TextureView.SurfaceTextureListener
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -22,11 +25,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
 
 
-@UnstableApi class VideosAdapter(private val mContext : Context, private val mVideoItems: List<VideoItem>) :
+@UnstableApi class VideosAdapter(private val mContext : Context, private val mVideoItems: List<VideoItem>,private val listener : SnackInterface) :
     RecyclerView.Adapter<VideosAdapter.VideoViewHolder>() {
+
+    interface SnackInterface{
+        fun onDoubleTap(position: Int)
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
         return VideoViewHolder(
-            ItemVideoContainerBinding.inflate(LayoutInflater.from(mContext), parent, false)
+            ItemVideoContainerBinding.inflate(LayoutInflater.from(mContext), parent, false), context = mContext, listener
         )
     }
 
@@ -64,7 +72,7 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
         return mVideoItems.size
     }
 
-    @UnstableApi class VideoViewHolder(private val binding : ItemVideoContainerBinding) : RecyclerView.ViewHolder(binding.root) {
+    @UnstableApi class VideoViewHolder(private val binding : ItemVideoContainerBinding, private val context : Context, private val delegate : SnackInterface) : RecyclerView.ViewHolder(binding.root) {
         private var player: ExoPlayer? = null
 
         private var playWhenReady = true
@@ -80,6 +88,27 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
             binding.txtTitle.text = videoItem.videoTitle
             binding.txtDesc.text = videoItem.videoDesc
 //            videoItem.videoURL?.let { initializePlayer() }
+            if (videoItem.isLiked){
+                binding.ivHeart.setImageDrawable(ContextCompat.getDrawable(context,R.drawable.ic_heart))
+            }else{
+                binding.ivHeart.setImageDrawable(ContextCompat.getDrawable(context,R.drawable.ic_heart_white))
+            }
+            binding.heartAni.addAnimatorListener(object : Animator.AnimatorListener{
+                override fun onAnimationStart(p0: Animator) {
+
+                }
+
+                override fun onAnimationEnd(p0: Animator) {
+                    binding.heartAni.visibility = View.GONE
+                }
+
+                override fun onAnimationCancel(p0: Animator) {
+                }
+
+                override fun onAnimationRepeat(p0: Animator) {
+                }
+
+            })
             initializePlayer()
 //            binding.videoView.setVideoPath(videoItem.videoURL)
 //            binding.videoView.setOnPreparedListener { mp ->
@@ -102,31 +131,29 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
             return bindingAdapterPosition
         }
          fun initializePlayer() {
-             if (player == null){
-                 Log.d("TAG","initializePlayer ${getItemPosition()}")
-                 val trackSelector = DefaultTrackSelector(binding.root.context).apply {
-                     setParameters(buildUponParameters().setMaxVideoSizeSd())
-                 }
-
-                 player = ExoPlayer.Builder(binding.root.context)
-                     .setTrackSelector(trackSelector)
-                     .build()
-                     .also { exoPlayer ->
-                         //binding.videoView.player = exoPlayer
-                         exoPlayer.setVideoTextureView(binding.videoView)
-                         val mediaItem = MediaItem.Builder()
-                             .setUri(mData?.videoURL)
-                             .setMimeType(MimeTypes.VIDEO_MP4)
-                             .build()
-                         exoPlayer.seekTo(0)
-                         exoPlayer.setMediaItem(mediaItem)
-                         exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
-                         exoPlayer.videoScalingMode = MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-                         exoPlayer.playWhenReady = false
-                         exoPlayer.seekTo(currentItem, playbackPosition)
-                         exoPlayer.addListener(object : Player.Listener{
-                             override fun onVideoSizeChanged(videoSize: VideoSize) {
-                                 super.onVideoSizeChanged(videoSize)
+             Log.d("TAG","initializePlayer ${getItemPosition()}")
+             val trackSelector = DefaultTrackSelector(context).apply {
+                 setParameters(buildUponParameters().setMaxVideoSizeSd())
+             }
+             player = ExoPlayer.Builder(binding.root.context)
+                 .setTrackSelector(trackSelector)
+                 .build()
+                 .also { exoPlayer ->
+                     //binding.videoView.player = exoPlayer
+                     exoPlayer.setVideoTextureView(binding.videoView)
+                     val mediaItem = MediaItem.Builder()
+                         .setUri(mData?.videoURL)
+                         .setMimeType(MimeTypes.VIDEO_MP4)
+                         .build()
+                     exoPlayer.seekTo(0)
+                     exoPlayer.setMediaItem(mediaItem)
+                     exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
+                     exoPlayer.videoScalingMode = MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                     exoPlayer.playWhenReady = false
+                     exoPlayer.seekTo(currentItem, playbackPosition)
+                     exoPlayer.addListener(object : Player.Listener{
+                         override fun onVideoSizeChanged(videoSize: VideoSize) {
+                             super.onVideoSizeChanged(videoSize)
 //                                 val videoRatio = videoSize.width / videoSize.height.toFloat()
 //                                val screenRatio = binding.videoView.width / binding.videoView.height.toFloat()
 //                                val scale = videoRatio / screenRatio
@@ -136,55 +163,62 @@ import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
 //                                    binding.videoView.scaleY = 1f / scale
 //                                }
 //                }
-                                 val videoWidth = videoSize.width
-                                 val videoHeight = videoSize.height
-                                 val screenWidth = Resources.getSystem().displayMetrics.widthPixels
-                                 val layout = binding.videoView.layoutParams
-                                 layout.width = screenWidth
-                                 layout.height = ((videoHeight.toFloat() / videoWidth.toFloat()) * screenWidth.toFloat()).toInt()
-                                 binding.videoView.layoutParams = layout
-                             }
-                             override fun onPlaybackStateChanged(playbackState: Int) {
-                                 val stateString: String = when (playbackState) {
-                                     ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -"
-                                     ExoPlayer.STATE_BUFFERING -> {
-                                         binding.progressBar.visibility = View.VISIBLE
-                                         "ExoPlayer.STATE_BUFFERING -"
-                                     }
-                                     ExoPlayer.STATE_READY -> {
-                                         binding.progressBar.visibility = View.GONE
-                                         "ExoPlayer.STATE_READY     -"
-                                     }
-                                     ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -"
-                                     else -> "UNKNOWN_STATE             -"
+                             val videoWidth = videoSize.width
+                             val videoHeight = videoSize.height
+                             val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+                             val layout = binding.videoView.layoutParams
+                             layout.width = screenWidth
+                             layout.height = ((videoHeight.toFloat() / videoWidth.toFloat()) * screenWidth.toFloat()).toInt()
+                             binding.videoView.layoutParams = layout
+                         }
+                         override fun onPlaybackStateChanged(playbackState: Int) {
+                             val stateString: String = when (playbackState) {
+                                 ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -"
+                                 ExoPlayer.STATE_BUFFERING -> {
+                                     binding.progressBar.visibility = View.VISIBLE
+                                     "ExoPlayer.STATE_BUFFERING -"
                                  }
-                                 Log.d("TAG", "changed state to $stateString")
+                                 ExoPlayer.STATE_READY -> {
+                                     binding.progressBar.visibility = View.GONE
+                                     "ExoPlayer.STATE_READY     -"
+                                 }
+                                 ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -"
+                                 else -> "UNKNOWN_STATE             -"
                              }
+                             Log.d("TAG", "changed state to $stateString")
+                         }
 
-                             override fun onPlayerError(error: PlaybackException) {
-                                 super.onPlayerError(error)
-                                 if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-                                     player?.seekToDefaultPosition()
-                                     player?.prepare()
-                                 }
-                                 Log.e("TAG", error.errorCodeName)
+                         override fun onPlayerError(error: PlaybackException) {
+                             super.onPlayerError(error)
+                             if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                                 player?.seekToDefaultPosition()
+                                 player?.prepare()
                              }
-                         })
-                         exoPlayer.prepare()
-                         //exoPlayer.play()
-                     }
-                 mediaLifecycleObserver = MediaLifecycleObserver(player,binding.root.context as LifecycleOwner)
-             }
-             binding.root.setOnClickListener{
-                 if( player?.isPlaying == true){
-                     binding.ivPlay.visibility = View.VISIBLE
-                     player?.pause()
-                 }else{
-                     binding.ivPlay.visibility = View.GONE
-                     player?.play()
+                             Log.e("TAG", error.errorCodeName)
+                         }
+                     })
+                     exoPlayer.prepare()
+                     //exoPlayer.play()
                  }
-             }
-        }
+             mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
+             binding.root.setOnClickListener(object : DoubleClickListener(){
+                 override fun onSingleClick(v: View?) {
+                     if( player?.isPlaying == true){
+                         binding.ivPlay.visibility = View.VISIBLE
+                         player?.pause()
+                     }else{
+                         binding.ivPlay.visibility = View.GONE
+                         player?.play()
+                     }
+                 }
+
+                 override fun onDoubleClick(v: View?) {
+                     binding.heartAni.playAnimation()
+                     delegate.onDoubleTap(bindingAdapterPosition)
+                     binding.ivHeart.setImageDrawable(ContextCompat.getDrawable(context,R.drawable.ic_heart))
+                 }
+            })
+         }
 
         fun play(){
             binding.ivPlay.visibility = View.GONE

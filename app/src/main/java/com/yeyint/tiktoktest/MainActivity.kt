@@ -1,18 +1,25 @@
 package com.yeyint.tiktoktest
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
 
 
-@UnstableApi class MainActivity : AppCompatActivity() {
+@UnstableApi class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
+
+    val videoItems: MutableList<VideoItem> = ArrayList()
+    private var adapter : VideosAdapter? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val videosViewPager = findViewById<ViewPager2>(R.id.viewPagerVideos)
-        val videoItems: MutableList<VideoItem> = ArrayList()
+
+        adapter = VideosAdapter(this,videoItems,this)
 
         val item = VideoItem()
         item.videoURL = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
@@ -70,11 +77,18 @@ import androidx.viewpager2.widget.ViewPager2
 
 
 
-        videosViewPager.adapter = VideosAdapter(this,videoItems)
+        videosViewPager.adapter = adapter
     }
 
     override fun onPause() {
         super.onPause()
 
+    }
+
+    override fun onDoubleTap(position: Int) {
+        videoItems[position].isLiked = true
+//        Handler(Looper.getMainLooper()).postDelayed({
+//            adapter?.notifyItemChanged(position)
+//        }, 1000)
     }
 }

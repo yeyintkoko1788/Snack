@@ -73,5 +73,27 @@
             android:layout_height="wrap_content"/>
 
     </LinearLayout>
+    <ImageView
+        android:id="@+id/ivHeart"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/ic_heart_white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginEnd="24dp"/>
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/heartAni"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginEnd="24dp"
+        app:lottie_autoPlay="false"
+        app:lottie_fileName="like_ani.json"
+        app:lottie_loop="false"
+        app:lottie_repeatCount="0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
