@@ -3,6 +3,7 @@ package com.yeyint.tiktoktest
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.widget.ViewPager2
@@ -20,31 +21,31 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
 
         val videosViewPager = findViewById<ViewPager2>(R.id.viewPagerVideos)
 
-        adapter = VideosAdapter(this, videoItems, this)
+        adapter = VideosAdapter(this, this)
 
         val item = VideoItem()
         item.videoURL =
-            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+            "https://saya-education.s3.amazonaws.com/staging/reel_videos/4/1.5-M-1.mp4"
         item.videoTitle = "Women In Tech"
         item.videoDesc = "International Women's Day 2019"
         videoItems.add(item)
 
         val item2 = VideoItem()
-        item2.videoURL = "https://www.exit109.com/~dnn/clips/RW20seconds_2.mp4"
+        item2.videoURL = "https://saya-education.s3.amazonaws.com/staging/reel_videos/3/Language-ai-render~1.mp4"
         item2.videoTitle = "Sasha Solomon"
         item2.videoDesc = "How Sasha Solomon Became a Software Developer at Twitter"
         videoItems.add(item2)
 
         val item3 = VideoItem()
         item3.videoURL =
-            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+            "https://saya-education.s3.amazonaws.com/staging/reel_videos/2/No-courage-render_1~1.mp4"
         item3.videoTitle = "Happy Hour Wednesday"
         item3.videoDesc = " Depth-First Search Algorithm"
         videoItems.add(item3)
 
         val item4 = VideoItem()
         item4.videoURL =
-            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+            "https://saya-education.s3.amazonaws.com/staging/reel_videos/1/No-time-render~1.mp4"
         item4.videoTitle = "Happy Hour Wednesday"
         item4.videoDesc = " Depth-First Search Algorithm"
         videoItems.add(item4)
@@ -82,9 +83,21 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
             "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
         item9.videoTitle = "Happy Hour Wednesday"
         item9.videoDesc = " Depth-First Search Algorithm"
-        videoItems.add(item9)
 
         videosViewPager.adapter = adapter
+        videoItems.add(item9)
+        adapter?.appendNewData(videoItems)
+
+        val onPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (position == videosViewPager.adapter?.itemCount?.minus(3)) {
+                // Reached the end of the list
+                // Your code here to handle the end of list reach
+                Log.d("TAG","On list end reach")
+                }
+            }
+        }
+        videosViewPager.registerOnPageChangeCallback(onPageChangeCallback)
     }
 
     override fun onDoubleTap(position: Int) {

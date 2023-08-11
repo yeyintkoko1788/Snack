@@ -3,33 +3,40 @@ package com.yeyint.tiktoktest
 import android.animation.Animator
 import android.content.Context
 import android.content.res.Resources
+import android.media.AudioManager
 import android.media.MediaCodec
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.TextureView.SurfaceTextureListener
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultDataSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
+import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
+import com.yeyint.tiktoktest.utils.DiffUtils
 import com.yeyint.tiktoktest.utils.DoubleClick
 import com.yeyint.tiktoktest.utils.DoubleClickListener
 import com.yeyint.tiktoktest.utils.VideoCache
@@ -38,9 +45,29 @@ import com.yeyint.tiktoktest.utils.VideoCache
 @UnstableApi
 class VideosAdapter(
     private val mContext: Context,
-    private val mVideoItems: List<VideoItem>,
     private val listener: SnackInterface
 ) : RecyclerView.Adapter<VideosAdapter.VideoViewHolder>() {
+
+    private var mData : ArrayList<VideoItem>? = null
+
+    init {
+        mData = ArrayList()
+    }
+
+    fun update(newDataList : List<VideoItem> , clear : Boolean) {
+        val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList))
+        if (clear)
+            this.mData!!.clear()
+        this.mData!!.addAll(newDataList)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    fun appendNewData(newData : List<VideoItem> , clear : Boolean = true) {
+        if (mData!!.isEmpty()) {
+            mData!!.addAll(newData)
+        } else
+            update(newData , clear)
+    }
 
     interface SnackInterface {
         fun onDoubleTap(position: Int)
@@ -57,7 +84,7 @@ class VideosAdapter(
 
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
         Log.d("TAG", "onBind $position")
-        holder.setVideoData(mVideoItems[position])
+        holder.setVideoData(mData!![position])
         //holder.initializePlayer()
     }
 
@@ -86,7 +113,7 @@ class VideosAdapter(
     }
 
     override fun getItemCount(): Int {
-        return mVideoItems.size
+        return mData!!.size
     }
 
     @UnstableApi
@@ -176,7 +203,8 @@ class VideosAdapter(
 
         fun initializePlayer() {
             Log.d("TAG", "initializePlayer ${getItemPosition()}")
-            val trackSelector = DefaultTrackSelector(context).apply {
+
+        val trackSelector = DefaultTrackSelector(context).apply {
                 setParameters(buildUponParameters().setMaxVideoSizeSd())
             }
 
@@ -193,15 +221,20 @@ class VideosAdapter(
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
             val mediaItem =
-                MediaItem.Builder().setUri(mData?.videoURL).setMimeType(MimeTypes.VIDEO_MP4).build()
+                MediaItem.Builder()
+                    .setUri(mData?.videoURL)
+                    .setMimeType(MimeTypes.VIDEO_MP4)
+                    .build()
 //             val mediaSource =
 //                 HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
+
             val mediaSource: MediaSource =
-                DefaultMediaSourceFactory(context).setDataSourceFactory(cacheDataSourceFactory)
-                    .createMediaSource(mediaItem)
+                ProgressiveMediaSource.Factory(cacheDataSourceFactory,
+                    DefaultExtractorsFactory()
+                ).createMediaSource(mediaItem)
 
 
-            player = ExoPlayer.Builder(binding.root.context).setTrackSelector(trackSelector).build()
+            player = ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
                 .also { exoPlayer ->
                     binding.videoView.player = exoPlayer
                     binding.videoView.useController = false
@@ -210,11 +243,13 @@ class VideosAdapter(
 
                     exoPlayer.seekTo(0)
                     exoPlayer.setMediaSource(mediaSource)
+                    exoPlayer.volume = 1f
                     exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
-                    exoPlayer.videoScalingMode =
-                        MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
                     exoPlayer.playWhenReady = false
-                    exoPlayer.seekTo(currentItem, playbackPosition)
+                    exoPlayer.setAudioAttributes(AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .build(), true)
 
                     exoPlayer.addListener(object : Player.Listener {
                         override fun onVideoSizeChanged(videoSize: VideoSize) {
@@ -228,14 +263,14 @@ class VideosAdapter(
 //                                    binding.videoView.scaleY = 1f / scale
 //                                }
 //                }
-                            val videoWidth = videoSize.width
-                            val videoHeight = videoSize.height
-                            val screenWidth = Resources.getSystem().displayMetrics.widthPixels
-                            val layout = binding.videoView.layoutParams
-                            layout.width = screenWidth
-                            layout.height =
-                                ((videoHeight.toFloat() / videoWidth.toFloat()) * screenWidth.toFloat()).toInt()
-                            binding.videoView.layoutParams = layout
+//                            val videoWidth = videoSize.width
+//                            val videoHeight = videoSize.height
+//                            val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+//                            val layout = binding.videoView.layoutParams
+//                            layout.width = screenWidth
+//                            layout.height =
+//                                ((videoHeight.toFloat() / videoWidth.toFloat()) * screenWidth.toFloat()).toInt()
+//                            binding.videoView.layoutParams = layout
                         }
 
                         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -269,7 +304,7 @@ class VideosAdapter(
                     exoPlayer.prepare()
                     //exoPlayer.play()
                 }
-            //  mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
+              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
 
         }
 
