@@ -55,7 +55,7 @@ class VideosAdapter(
     }
 
     fun update(newDataList : List<VideoItem> , clear : Boolean) {
-        val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList))
+        val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList),true)
         if (clear)
             this.mData!!.clear()
         this.mData!!.addAll(newDataList)
@@ -173,9 +173,9 @@ class VideosAdapter(
                     binding.heartAni.playAnimation()
                     binding.heartAni.visibility = View.VISIBLE
                     delegate.onDoubleTap(bindingAdapterPosition)
-                    binding.ivHeart.setImageDrawable(
-                        ContextCompat.getDrawable(context, R.drawable.ic_heart)
-                    )
+//                    binding.ivHeart.setImageDrawable(
+//                        ContextCompat.getDrawable(context, R.drawable.ic_heart)
+//                    )
                 }
 
                 override fun onSingleClickEvent(view: View?) {
@@ -191,7 +191,7 @@ class VideosAdapter(
 
             binding.ivHeart.setOnClickListener {
                 delegate.onFavouriteTap(bindingAdapterPosition)
-                binding.ivHeart.setImageResource(getImageResourceId(mData!!.isLiked))
+                //binding.ivHeart.setImageResource(getImageResourceId(mData!!.isLiked))
             }
 
             initializePlayer()
@@ -205,7 +205,7 @@ class VideosAdapter(
             Log.d("TAG", "initializePlayer ${getItemPosition()}")
 
         val trackSelector = DefaultTrackSelector(context).apply {
-                setParameters(buildUponParameters().setMaxVideoSizeSd())
+                setParameters(buildUponParameters().setAllowAudioMixedChannelCountAdaptiveness(true))
             }
 
             // Produces DataSource instances through which media data is loaded.
@@ -223,7 +223,6 @@ class VideosAdapter(
             val mediaItem =
                 MediaItem.Builder()
                     .setUri(mData?.videoURL)
-                    .setMimeType(MimeTypes.VIDEO_MP4)
                     .build()
 //             val mediaSource =
 //                 HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
@@ -240,7 +239,6 @@ class VideosAdapter(
                     binding.videoView.useController = false
 
                     // exoPlayer.setVideoTextureView(binding.videoView)
-
                     exoPlayer.seekTo(0)
                     exoPlayer.setMediaSource(mediaSource)
                     exoPlayer.volume = 1f
@@ -249,9 +247,20 @@ class VideosAdapter(
                     exoPlayer.setAudioAttributes(AudioAttributes.Builder()
                         .setUsage(C.USAGE_MEDIA)
                         .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_AUTO)
                         .build(), true)
 
                     exoPlayer.addListener(object : Player.Listener {
+
+                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                            super.onPlayWhenReadyChanged(playWhenReady, reason)
+                            if (playWhenReady){
+                                binding.ivPlay.visibility = View.GONE
+                            }else{
+                                binding.ivPlay.visibility = View.VISIBLE
+                            }
+                        }
+
                         override fun onVideoSizeChanged(videoSize: VideoSize) {
                             super.onVideoSizeChanged(videoSize)
 //                                 val videoRatio = videoSize.width / videoSize.height.toFloat()
@@ -304,8 +313,11 @@ class VideosAdapter(
                     exoPlayer.prepare()
                     //exoPlayer.play()
                 }
-              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
 
+            if (mData?.isPlay == true){
+                play()
+            }
+              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
         }
 
         private fun getImageResourceId(isFavourite: Boolean): Int {

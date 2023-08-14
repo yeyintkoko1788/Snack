@@ -1,8 +1,9 @@
 package com.yeyint.tiktoktest.utils
 
 import androidx.recyclerview.widget.DiffUtil
+import com.yeyint.tiktoktest.VideoItem
 
-class DiffUtils<T>(private var oldData: List<T>, private var newData: List<T>) :
+class DiffUtils(private var oldData: List<VideoItem>, private var newData: List<VideoItem>) :
     DiffUtil.Callback() {
 
     override fun getOldListSize(): Int {
@@ -18,6 +19,11 @@ class DiffUtils<T>(private var oldData: List<T>, private var newData: List<T>) :
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        return oldData[oldItemPosition] == newData[newItemPosition]
+        return oldData[oldItemPosition].isLiked == newData[newItemPosition].isLiked
+    }
+
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+        // Implement method if you're going to use ItemAnimator
+        return super.getChangePayload(oldItemPosition, newItemPosition)
     }
 }

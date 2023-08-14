@@ -5,4 +5,5 @@ class VideoItem {
     var videoTitle: String? = null
     var videoDesc: String? = null
     var isLiked : Boolean = false
+    var isPlay : Boolean = false
 }
