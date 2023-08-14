@@ -6,7 +6,11 @@ import android.os.Looper
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.recyclerview.widget.PagerSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
 
 
 @UnstableApi
@@ -14,6 +18,7 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
 
     val videoItems: MutableList<VideoItem> = ArrayList()
     private var adapter: VideosAdapter? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,21 +88,45 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
             "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
         item9.videoTitle = "Happy Hour Wednesday"
         item9.videoDesc = " Depth-First Search Algorithm"
-
-        videosViewPager.adapter = adapter
         videoItems.add(item9)
         adapter?.appendNewData(videoItems)
 
-        val onPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+        videosViewPager.adapter = adapter
+
+/*        val onPageChangeCallback = object : OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 if (position == videosViewPager.adapter?.itemCount?.minus(3)) {
                 // Reached the end of the list
                 // Your code here to handle the end of list reach
                 Log.d("TAG","On list end reach")
                 }
+                Log.d("TAG","On page selected")
+
             }
         }
-        videosViewPager.registerOnPageChangeCallback(onPageChangeCallback)
+        videosViewPager.registerOnPageChangeCallback(onPageChangeCallback)*/
+
+        videosViewPager.registerOnPageChangeCallback(object : OnPageChangeCallback(){
+            override fun onPageScrollStateChanged(state: Int) {
+                super.onPageScrollStateChanged(state)
+                Log.d("TAG","On page scroll state $state ")
+            }
+
+            override fun onPageScrolled(
+                position: Int,
+                positionOffset: Float,
+                positionOffsetPixels: Int
+            ) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels)
+                Log.d("TAG","On page scroll $position , $positionOffset , $positionOffsetPixels ")
+            }
+
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                Log.d("TAG","On page selected $position")
+            }
+
+        })
     }
 
     override fun onDoubleTap(position: Int) {

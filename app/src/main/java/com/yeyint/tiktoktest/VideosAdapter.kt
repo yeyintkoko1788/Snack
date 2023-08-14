@@ -28,6 +28,7 @@ import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.SimpleExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -35,6 +36,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
 import com.yeyint.tiktoktest.utils.DiffUtils
 import com.yeyint.tiktoktest.utils.DoubleClick
@@ -53,6 +55,7 @@ class VideosAdapter(
     init {
         mData = ArrayList()
     }
+
 
     fun update(newDataList : List<VideoItem> , clear : Boolean) {
         val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList))
@@ -90,25 +93,31 @@ class VideosAdapter(
 
     override fun onViewAttachedToWindow(holder: VideoViewHolder) {
         super.onViewAttachedToWindow(holder)
-        Log.d("TAG", "onViewAttachedToWindow ${holder.getItemPosition()}")
+        Log.d("TAG", "onView AttachedToWindow ${holder.getItemPosition()}")
         holder.play()
     }
 
     override fun onViewDetachedFromWindow(holder: VideoViewHolder) {
         super.onViewDetachedFromWindow(holder)
-        Log.d("TAG", "onViewDetachedFromWindow ${holder.getItemPosition()}")
+        Log.d("TAG", "onView DetachedFromWindow ${holder.getItemPosition()}")
         //holder.releasePlayer()
         holder.pause()
+
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
-        Log.d("TAG", "onAttachedToRecyclerView")
+        Log.d("TAG", "onView AttachedToRecyclerView")
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        Log.d("TAG", "onView DetachedFromRecyclerView")
     }
 
     override fun onViewRecycled(holder: VideoViewHolder) {
         super.onViewRecycled(holder)
-        Log.d("TAG", "onViewRecycled ${holder.getItemPosition()}")
+        Log.d("TAG", "onView Recycled ${holder.getItemPosition()}")
         holder.releasePlayer()
     }
 
@@ -232,7 +241,6 @@ class VideosAdapter(
                 ProgressiveMediaSource.Factory(cacheDataSourceFactory,
                     DefaultExtractorsFactory()
                 ).createMediaSource(mediaItem)
-
 
             player = ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
                 .also { exoPlayer ->
