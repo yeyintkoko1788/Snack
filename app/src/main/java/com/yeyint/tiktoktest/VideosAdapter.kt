@@ -28,15 +28,14 @@ import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SimpleExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
 import com.yeyint.tiktoktest.databinding.ItemVideoContainerBinding
 import com.yeyint.tiktoktest.utils.DiffUtils
 import com.yeyint.tiktoktest.utils.DoubleClick
@@ -46,35 +45,47 @@ import com.yeyint.tiktoktest.utils.VideoCache
 
 @UnstableApi
 class VideosAdapter(
-    private val mContext: Context,
-    private val listener: SnackInterface
+    private val mContext: Context, private val listener: SnackInterface
 ) : RecyclerView.Adapter<VideosAdapter.VideoViewHolder>() {
 
-    private var mData : ArrayList<VideoItem>? = null
+    private var mData: ArrayList<VideoItem>? = null
+    val payLoad = "like_pay"
 
     init {
         mData = ArrayList()
     }
 
-
-    fun update(newDataList : List<VideoItem> , clear : Boolean) {
-        val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList))
-        if (clear)
-            this.mData!!.clear()
-        this.mData!!.addAll(newDataList)
-        diffResult.dispatchUpdatesTo(this)
+    fun getItemAt(position: Int): VideoItem {
+        return mData!![position]
     }
 
-    fun appendNewData(newData : List<VideoItem> , clear : Boolean = true) {
+    fun update(newDataList: List<VideoItem>, clear: Boolean) {
+        val diffResult = DiffUtil.calculateDiff(DiffUtils(this.mData!!, newDataList), true)
+        if (clear) this.mData!!.clear()
+        this.mData!!.addAll(newDataList)
+
+        diffResult.dispatchUpdatesTo(object : ListUpdateCallback {
+            override fun onInserted(position: Int, count: Int) {
+                notifyItemChanged(position,payLoad)
+            }
+
+            override fun onRemoved(position: Int, count: Int) {}
+            override fun onMoved(fromPosition: Int, toPosition: Int) {}
+            override fun onChanged(position: Int, count: Int, payload: Any?) {
+               // this@VideosAdapter.notifyItemChanged(position)
+            }
+        })
+    }
+
+    fun appendNewData(newData: List<VideoItem>, clear: Boolean = true) {
         if (mData!!.isEmpty()) {
             mData!!.addAll(newData)
-        } else
-            update(newData , clear)
+        } else update(newData, clear)
     }
 
     interface SnackInterface {
-        fun onDoubleTap(position: Int)
-        fun onFavouriteTap(position: Int)
+        fun onDoubleTap(position: Int, isLike: Boolean)
+        fun onFavouriteTap(position: Int, isLike: Boolean)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
@@ -86,15 +97,34 @@ class VideosAdapter(
     }
 
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
-        Log.d("TAG", "onBind $position")
-        holder.setVideoData(mData!![position])
-        //holder.initializePlayer()
+        Log.d("TAG","on bind view holder")
     }
+
+//    override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
+//        Log.d("TAG", "onBind $position")
+//        holder.setVideoData(mData!![position])
+//        Log.d("TAG", "onView BindViewHolder ${mData!![position]}")
+//        //holder.initializePlayer()
+//    }
+
+    override fun onBindViewHolder(
+        holder: VideoViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        super.onBindViewHolder(holder, position, payloads)
+        if(payloads.isNotEmpty())
+            holder.toggleFavouriteOrPlay(mData!![position])
+        else
+            holder.setVideoData(mData!![position])
+    }
+
+
 
     override fun onViewAttachedToWindow(holder: VideoViewHolder) {
         super.onViewAttachedToWindow(holder)
         Log.d("TAG", "onView AttachedToWindow ${holder.getItemPosition()}")
-        holder.play()
+        //holder.play()
     }
 
     override fun onViewDetachedFromWindow(holder: VideoViewHolder) {
@@ -102,17 +132,11 @@ class VideosAdapter(
         Log.d("TAG", "onView DetachedFromWindow ${holder.getItemPosition()}")
         //holder.releasePlayer()
         holder.pause()
-
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         Log.d("TAG", "onView AttachedToRecyclerView")
-    }
-
-    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView)
-        Log.d("TAG", "onView DetachedFromRecyclerView")
     }
 
     override fun onViewRecycled(holder: VideoViewHolder) {
@@ -123,6 +147,7 @@ class VideosAdapter(
 
     override fun getItemCount(): Int {
         return mData!!.size
+
     }
 
     @UnstableApi
@@ -138,7 +163,29 @@ class VideosAdapter(
         private var playbackPosition = 0L
         private var mData: VideoItem? = null
 
+
         private var mediaLifecycleObserver: MediaLifecycleObserver? = null
+
+        fun toggleFavouriteOrPlay(videoItem: VideoItem){
+            this.mData = videoItem
+            if (videoItem.isLiked) {
+                binding.ivHeart.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context, R.drawable.ic_heart
+                    )
+                )
+            } else {
+                binding.ivHeart.setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context, R.drawable.ic_heart_white
+                    )
+                )
+            }
+
+            if(videoItem.isPlay){
+                player?.play()
+            }
+        }
 
 
         fun setVideoData(videoItem: VideoItem) {
@@ -181,10 +228,10 @@ class VideosAdapter(
                 override fun onDoubleClickEvent(view: View?) {
                     binding.heartAni.playAnimation()
                     binding.heartAni.visibility = View.VISIBLE
-                    delegate.onDoubleTap(bindingAdapterPosition)
-                    binding.ivHeart.setImageDrawable(
-                        ContextCompat.getDrawable(context, R.drawable.ic_heart)
-                    )
+                    delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
+//                    binding.ivHeart.setImageDrawable(
+//                        ContextCompat.getDrawable(context, R.drawable.ic_heart)
+//                    )
                 }
 
                 override fun onSingleClickEvent(view: View?) {
@@ -199,8 +246,8 @@ class VideosAdapter(
             }))
 
             binding.ivHeart.setOnClickListener {
-                delegate.onFavouriteTap(bindingAdapterPosition)
-                binding.ivHeart.setImageResource(getImageResourceId(mData!!.isLiked))
+                delegate.onFavouriteTap(bindingAdapterPosition, mData!!.isLiked)
+                //binding.ivHeart.setImageResource(getImageResourceId(mData!!.isLiked))
             }
 
             initializePlayer()
@@ -211,10 +258,14 @@ class VideosAdapter(
         }
 
         fun initializePlayer() {
-            Log.d("TAG", "initializePlayer ${getItemPosition()}")
+            Log.d("TAG", "on view initializePlayer ${getItemPosition()}")
 
-        val trackSelector = DefaultTrackSelector(context).apply {
-                setParameters(buildUponParameters().setMaxVideoSizeSd())
+            val trackSelector = DefaultTrackSelector(context).apply {
+                setParameters(
+                    buildUponParameters().setAllowAudioMixedChannelCountAdaptiveness(
+                        true
+                    )
+                )
             }
 
             // Produces DataSource instances through which media data is loaded.
@@ -229,18 +280,14 @@ class VideosAdapter(
                 .setUpstreamDataSourceFactory(upstreamFactory)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
-            val mediaItem =
-                MediaItem.Builder()
-                    .setUri(mData?.videoURL)
-                    .setMimeType(MimeTypes.VIDEO_MP4)
-                    .build()
+            val mediaItem = MediaItem.Builder().setUri(mData?.videoURL).build()
 //             val mediaSource =
 //                 HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
 
-            val mediaSource: MediaSource =
-                ProgressiveMediaSource.Factory(cacheDataSourceFactory,
-                    DefaultExtractorsFactory()
-                ).createMediaSource(mediaItem)
+            val mediaSource: MediaSource = ProgressiveMediaSource.Factory(
+                cacheDataSourceFactory, DefaultExtractorsFactory()
+            ).createMediaSource(mediaItem)
+
 
             player = ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
                 .also { exoPlayer ->
@@ -248,18 +295,34 @@ class VideosAdapter(
                     binding.videoView.useController = false
 
                     // exoPlayer.setVideoTextureView(binding.videoView)
-
                     exoPlayer.seekTo(0)
                     exoPlayer.setMediaSource(mediaSource)
                     exoPlayer.volume = 1f
                     exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
                     exoPlayer.playWhenReady = false
-                    exoPlayer.setAudioAttributes(AudioAttributes.Builder()
-                        .setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        .build(), true)
+                    exoPlayer.setAudioAttributes(
+                        AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                            .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_AUTO).build(), false
+                    )
 
                     exoPlayer.addListener(object : Player.Listener {
+
+                        override fun onPlayWhenReadyChanged(
+                            playWhenReady: Boolean, reason: Int
+                        ) {
+                            super.onPlayWhenReadyChanged(playWhenReady, reason)
+                            if (playWhenReady) {
+                                binding.ivPlay.visibility = View.GONE
+                                Log.d("TAG", "on view play when ready $playWhenReady")
+
+                            } else {
+                                binding.ivPlay.visibility = View.VISIBLE
+                                Log.d("TAG", "on view play when ready else$playWhenReady")
+
+                            }
+                        }
+
                         override fun onVideoSizeChanged(videoSize: VideoSize) {
                             super.onVideoSizeChanged(videoSize)
 //                                 val videoRatio = videoSize.width / videoSize.height.toFloat()
@@ -312,8 +375,11 @@ class VideosAdapter(
                     exoPlayer.prepare()
                     //exoPlayer.play()
                 }
-              mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
 
+            if (mData?.isPlay == true) {
+                play()
+            }
+            mediaLifecycleObserver = MediaLifecycleObserver(player, context as LifecycleOwner)
         }
 
         private fun getImageResourceId(isFavourite: Boolean): Int {
@@ -333,6 +399,7 @@ class VideosAdapter(
 
         fun releasePlayer() {
             Log.d("TAG", "releasePlayer ${getItemPosition()}")
+            mData = null
             player?.let { exoPlayer ->
                 playbackPosition = exoPlayer.currentPosition
                 currentItem = exoPlayer.currentMediaItemIndex
