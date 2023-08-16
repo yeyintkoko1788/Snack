@@ -2,9 +2,6 @@ package com.yeyint.tiktoktest
 
 import android.animation.Animator
 import android.content.Context
-import android.content.res.Resources
-import android.media.AudioManager
-import android.media.MediaCodec
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,21 +11,16 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultDataSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
-import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -167,24 +159,28 @@ class VideosAdapter(
         private var mediaLifecycleObserver: MediaLifecycleObserver? = null
 
         fun toggleFavouriteOrPlay(videoItem: VideoItem){
-            this.mData = videoItem
-            if (videoItem.isLiked) {
-                binding.ivHeart.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context, R.drawable.ic_heart
+            if (mData!!.isLiked != videoItem.isLiked){
+                if (videoItem.isLiked) {
+                    binding.ivHeart.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context, R.drawable.ic_heart
+                        )
                     )
-                )
-            } else {
-                binding.ivHeart.setImageDrawable(
-                    ContextCompat.getDrawable(
-                        context, R.drawable.ic_heart_white
+                } else {
+                    binding.ivHeart.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            context, R.drawable.ic_heart_white
+                        )
                     )
-                )
-            }
+                }
+            }else if (mData!!.isPlay != videoItem.isPlay){
+                if(videoItem.isPlay){
+                    player?.seekTo(0)
+                    player?.play()
+                }
 
-            if(videoItem.isPlay){
-                player?.play()
             }
+            this.mData = videoItem
         }
 
 
@@ -228,7 +224,8 @@ class VideosAdapter(
                 override fun onDoubleClickEvent(view: View?) {
                     binding.heartAni.playAnimation()
                     binding.heartAni.visibility = View.VISIBLE
-                    delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
+                    if (!mData!!.isLiked)
+                        delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
 //                    binding.ivHeart.setImageDrawable(
 //                        ContextCompat.getDrawable(context, R.drawable.ic_heart)
 //                    )
