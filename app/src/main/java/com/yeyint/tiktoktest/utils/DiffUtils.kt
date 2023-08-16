@@ -19,7 +19,7 @@ class DiffUtils(private var oldData: List<VideoItem>, private var newData: List<
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        return oldData[oldItemPosition].isLiked == newData[newItemPosition].isLiked
+        return oldData[oldItemPosition].videoTitle.equals(newData[newItemPosition].videoTitle)
     }
 
     override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {

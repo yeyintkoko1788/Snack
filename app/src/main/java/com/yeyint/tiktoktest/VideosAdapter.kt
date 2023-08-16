@@ -54,8 +54,12 @@ class VideosAdapter(
         mData = ArrayList()
     }
 
+    fun getItemAt(position: Int) : VideoItem{
+        return mData!![position]
+    }
+
     fun update(newDataList : List<VideoItem> , clear : Boolean) {
-        val diffResult = DiffUtil.calculateDiff(DiffUtils(mData!! , newDataList),true)
+        val diffResult = DiffUtil.calculateDiff(DiffUtils(this.mData!! , newDataList),true)
         if (clear)
             this.mData!!.clear()
         this.mData!!.addAll(newDataList)
@@ -337,6 +341,7 @@ class VideosAdapter(
 
         fun releasePlayer() {
             Log.d("TAG", "releasePlayer ${getItemPosition()}")
+            mData = null
             player?.let { exoPlayer ->
                 playbackPosition = exoPlayer.currentPosition
                 currentItem = exoPlayer.currentMediaItemIndex

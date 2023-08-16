@@ -29,7 +29,10 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
         videosViewPager.adapter = adapter
         viewModel.getSnackList()
         viewModel.snackList.observe(this) {
-            Log.d("TAG", it.size.toString())
+            if (previousPosition != -1){
+                val data = adapter?.getItemAt(position = previousPosition)
+                Log.d("TAG", data?.isLiked.toString())
+            }
             adapter?.appendNewData(it)
         }
 
@@ -60,6 +63,7 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
     }
 
     override fun onDoubleTap(position: Int) {
+        previousPosition = position
         viewModel.toggleLike(position)
 //        Handler(Looper.getMainLooper()).postDelayed({
 //            adapter?.notifyItemChanged(position)

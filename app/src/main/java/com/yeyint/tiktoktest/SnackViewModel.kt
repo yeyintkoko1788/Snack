@@ -1,5 +1,6 @@
 package com.yeyint.tiktoktest
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
@@ -64,21 +65,32 @@ class SnackViewModel : ViewModel() {
         item8.videoDesc = " Depth-First Search Algorithm"
         videoItems.add(item8)
 
-        val item9 = VideoItem()
-        item9.videoURL =
-            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
-        item9.videoTitle = "Happy Hour Wednesday"
-        item9.videoDesc = " Depth-First Search Algorithm"
     }
 
     fun getSnackList(){
         snackList.value = videoItems
     }
 
-    fun toggleLike(position : Int){
-        videoItems[position].isLiked = !videoItems[position].isLiked
-        snackList.value = videoItems
+//    fun toggleLike(position : Int){
+//        val item9 = VideoItem()
+//        item9.videoURL =
+//            "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
+//        item9.videoTitle = "Happy Hour Wednesday"
+//        item9.videoDesc = " Depth-First Search Algorithm"
+//        videoItems.add(item9)
+//        videoItems[position].videoTitle = "Changed"
+//        videoItems[position].isLiked = !videoItems[position].isLiked
+//        snackList.value = videoItems
+//    }
+
+    fun toggleLike(position: Int) {
+        val updatedVideoItems = ArrayList(videoItems)
+        val currentItem = updatedVideoItems[position]
+        val updatedItem = currentItem.copy(isLiked = !currentItem.isLiked)
+        updatedVideoItems[position] = updatedItem
+        snackList.value = updatedVideoItems
     }
+
 
 //    fun togglePlay(position : Int){
 //        videoItems[position].isPlay = !videoItems[position].isPlay
