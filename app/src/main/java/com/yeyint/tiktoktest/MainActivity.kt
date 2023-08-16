@@ -31,9 +31,12 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
         viewModel.snackList.observe(this) {
             if (previousPosition != -1){
                 val data = adapter?.getItemAt(position = previousPosition)
-                Log.d("TAG", data?.isLiked.toString())
+                if (data != null) {
+                    Log.d("TAG","on toggle main ${data.isLiked } : ${data.videoTitle.toString()} " )
+                }
             }
             adapter?.appendNewData(it)
+          //  adapter?.notifyItemChanged(previousPosition)
         }
 
         val onPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
@@ -46,8 +49,11 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
 //                if (previousPosition != -1){
 //                    viewModel.togglePlay(previousPosition)
 //                }
-//                previousPosition = position
-//                viewModel.togglePlay(position)
+                if (previousPosition != -1 && previousPosition != position){
+                    adapter?.getItemAt(previousPosition)?.isPlay?.let { viewModel.togglePlay(previousPosition, it) }
+                }
+                adapter?.getItemAt(position)?.isPlay?.let { viewModel.togglePlay(position, it) }
+                previousPosition = position
 
             }
 
@@ -62,16 +68,16 @@ class MainActivity : AppCompatActivity(), VideosAdapter.SnackInterface {
         videosViewPager.registerOnPageChangeCallback(onPageChangeCallback)
     }
 
-    override fun onDoubleTap(position: Int) {
+    override fun onDoubleTap(position: Int, isLike: Boolean) {
         previousPosition = position
-        viewModel.toggleLike(position)
+        viewModel.toggleLike(position, isLike)
 //        Handler(Looper.getMainLooper()).postDelayed({
 //            adapter?.notifyItemChanged(position)
 //        }, 1000)
     }
 
-    override fun onFavouriteTap(position: Int) {
-        viewModel.toggleLike(position)
+    override fun onFavouriteTap(position: Int,isLike: Boolean) {
+        viewModel.toggleLike(position,isLike)
     }
 
 //    fun ViewPager2.reduceDragSensitivity() {
