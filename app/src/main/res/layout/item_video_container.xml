@@ -45,7 +45,7 @@
            app:layout_constraintStart_toStartOf="parent"
            app:layout_constraintEnd_toEndOf="parent"
            app:layout_constraintBottom_toBottomOf="parent"/>
-        <com.airbnb.lottie.LottieAnimationView
+       <!-- <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/heartAni"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -57,7 +57,7 @@
             app:lottie_autoPlay="false"
             app:lottie_fileName="like_ani.json"
             app:lottie_loop="false"
-            app:lottie_repeatCount="0" />
+            app:lottie_repeatCount="0" />-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -51,33 +51,41 @@ class VideoViewHolder(
 
     private var mediaLifecycleObserver: MediaLifecycleObserver? = null
 
-    fun toggleFavouriteOrPlay(videoItem: VideoItem){
-        if (mData!!.isLiked != videoItem.isLiked){
+    fun toggleFavouriteOrPlay(videoItem: VideoItem) {
+        if (mData!!.isLiked != videoItem.isLiked) {
             binding.composeContainer.setContent {
                 val resource = if (videoItem.isLiked) {
                     R.drawable.ic_heart
                 } else {
                     R.drawable.ic_heart_white
                 }
-                SnackItem(title = videoItem.videoTitle!!, description = videoItem.videoDesc!!, resource, onTapHeart = {
-                    delegate.onFavouriteTap(bindingAdapterPosition, mData!!.isLiked)
-                }, singleClick = {
-                    if (player?.isPlaying == true) {
-                        binding.ivPlay.visibility = View.VISIBLE
-                        player?.pause()
-                    } else {
-                        binding.ivPlay.visibility = View.GONE
-                        player?.play()
+
+                SnackItem(
+                    title = videoItem.videoTitle!!,
+                    description = videoItem.videoDesc!!,
+                    resource,
+                    onTapHeart = {
+                        delegate.onFavouriteTap(bindingAdapterPosition, mData!!.isLiked)
+                    },
+                    singleClick = {
+                        if (player?.isPlaying == true) {
+                            binding.ivPlay.visibility = View.VISIBLE
+                            player?.pause()
+                        } else {
+                            binding.ivPlay.visibility = View.GONE
+                            player?.play()
+                        }
+                    },
+                    doubleClick = {
+                      //  binding.heartAni.playAnimation()
+                      //  binding.heartAni.visibility = View.VISIBLE
+                        if (!mData!!.isLiked)
+                            delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
                     }
-                }, doubleClick = {
-                    binding.heartAni.playAnimation()
-                    binding.heartAni.visibility = View.VISIBLE
-                    if (!mData!!.isLiked)
-                        delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
-                })
+                )
             }
-        }else if (mData!!.isPlay != videoItem.isPlay){
-            if(videoItem.isPlay){
+        } else if (mData!!.isPlay != videoItem.isPlay) {
+            if (videoItem.isPlay) {
                 player?.seekTo(0)
                 player?.play()
             }
@@ -95,41 +103,48 @@ class VideoViewHolder(
             } else {
                 R.drawable.ic_heart_white
             }
-            SnackItem(title = videoItem.videoTitle!!, description = videoItem.videoDesc!!, resource, onTapHeart = {
-                delegate.onFavouriteTap(bindingAdapterPosition, mData!!.isLiked)
-            }, singleClick = {
-                if (player?.isPlaying == true) {
-                    binding.ivPlay.visibility = View.VISIBLE
-                    player?.pause()
-                } else {
-                    binding.ivPlay.visibility = View.GONE
-                    player?.play()
+            SnackItem(
+                title = videoItem.videoTitle!!,
+                description = videoItem.videoDesc!!,
+                resource,
+                onTapHeart = {
+                    delegate.onFavouriteTap(bindingAdapterPosition, mData!!.isLiked)
+                },
+                singleClick = {
+                    if (player?.isPlaying == true) {
+                        binding.ivPlay.visibility = View.VISIBLE
+                        player?.pause()
+                    } else {
+                        binding.ivPlay.visibility = View.GONE
+                        player?.play()
+                    }
+                },
+                doubleClick = {
+//                    binding.heartAni.playAnimation()
+//                    binding.heartAni.visibility = View.VISIBLE
+                    if (!mData!!.isLiked)
+                        delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
                 }
-            }, doubleClick = {
-                binding.heartAni.playAnimation()
-                binding.heartAni.visibility = View.VISIBLE
-                if (!mData!!.isLiked)
-                    delegate.onDoubleTap(bindingAdapterPosition, mData!!.isLiked)
-            })
+            )
         }
 //            videoItem.videoURL?.let { initializePlayer() }
 
-        binding.heartAni.addAnimatorListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(p0: Animator) {
-
-            }
-
-            override fun onAnimationEnd(p0: Animator) {
-                binding.heartAni.visibility = View.GONE
-            }
-
-            override fun onAnimationCancel(p0: Animator) {
-            }
-
-            override fun onAnimationRepeat(p0: Animator) {
-            }
-
-        })
+//        binding.heartAni.addAnimatorListener(object : Animator.AnimatorListener {
+//            override fun onAnimationStart(p0: Animator) {
+//
+//            }
+//
+//            override fun onAnimationEnd(p0: Animator) {
+//                binding.heartAni.visibility = View.GONE
+//            }
+//
+//            override fun onAnimationCancel(p0: Animator) {
+//            }
+//
+//            override fun onAnimationRepeat(p0: Animator) {
+//            }
+//
+//        })
 
         initializePlayer()
     }
