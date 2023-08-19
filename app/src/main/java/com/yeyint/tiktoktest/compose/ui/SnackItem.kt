@@ -84,6 +84,8 @@ fun SnackItem(
         color = Color.Transparent,
         modifier = Modifier
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
                 onDoubleClick = {
                     appLaunchedFirstTime = false
                     isPlaying = true
