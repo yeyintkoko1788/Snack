@@ -175,8 +175,7 @@ class VideosAdapter(
                 }
             }else if (mData!!.isPlay != videoItem.isPlay){
                 if(videoItem.isPlay){
-                    player?.seekTo(0)
-                    player?.play()
+                    play()
                 }
 
             }
