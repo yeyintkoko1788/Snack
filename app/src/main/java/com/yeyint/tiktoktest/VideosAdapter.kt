@@ -20,6 +20,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -256,13 +257,21 @@ class VideosAdapter(
         fun initializePlayer() {
             Log.d("TAG", "on view initializePlayer ${getItemPosition()}")
 
-            val trackSelector = DefaultTrackSelector(context).apply {
+           /* it only use one media decode type and it cannot be able every device
+           val trackSelector = DefaultTrackSelector(context).apply {
                 setParameters(
                     buildUponParameters().setAllowAudioMixedChannelCountAdaptiveness(
                         true
                     )
                 )
             }
+*/
+            val extensionRendererMode : @DefaultRenderersFactory.ExtensionRendererMode Int =
+                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+
+            val drf = DefaultRenderersFactory(context.applicationContext)
+                .setExtensionRendererMode(extensionRendererMode)
+                .setEnableDecoderFallback(true)
 
             // Produces DataSource instances through which media data is loaded.
             val downloadCache = VideoCache.getInstance(context)
@@ -277,6 +286,7 @@ class VideosAdapter(
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
             val mediaItem = MediaItem.Builder().setUri(mData?.videoURL).build()
+
 //             val mediaSource =
 //                 HlsMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
 
@@ -284,8 +294,10 @@ class VideosAdapter(
                 cacheDataSourceFactory, DefaultExtractorsFactory()
             ).createMediaSource(mediaItem)
 
-
-            player = ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
+           //it only use define media decode
+           // player = ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
+            //it use suitable media decode from device
+            player = ExoPlayer.Builder(context,drf).build()
                 .also { exoPlayer ->
                     binding.videoView.player = exoPlayer
                     binding.videoView.useController = false
